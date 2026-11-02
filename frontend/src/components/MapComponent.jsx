@@ -15,9 +15,39 @@ import {
   MapPin,
   AlertOctagon,
   Navigation,
-  Crosshair,
-  Maximize2
+  Globe,
+  Satellite,
+  Compass,
+  CheckCircle2
 } from 'lucide-react';
+
+// Pre-configured public tile servers (All 100% free, zero API key required)
+const BASEMAP_PRESETS = {
+  carto_dark: {
+    id: 'carto_dark',
+    label: 'Tactical Dark (CartoDB)',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    subdomains: 'abcd',
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  },
+  osm_standard: {
+    id: 'osm_standard',
+    label: 'OpenStreetMap (Public)',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: 'abc',
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
+  },
+  satellite_esri: {
+    id: 'satellite_esri',
+    label: 'Satellite Imagery (ESRI)',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    subdomains: '',
+    maxZoom: 18,
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+  }
+};
 
 // Precision military/CAD styled tactical map markers
 const createTacticalPin = (label, bgHex, borderHex = '#ffffff') => {
@@ -28,7 +58,7 @@ const createTacticalPin = (label, bgHex, borderHex = '#ffffff') => {
         display: flex;
         align-items: center;
         gap: 4px;
-        background: #111722;
+        background: #0f1623;
         border: 1px solid ${borderHex};
         border-radius: 4px;
         padding: 2px 6px;
@@ -62,11 +92,24 @@ function MapClickHandler({ mapMode, onMapClick }) {
   return null;
 }
 
+// Invalidate size on mount to eliminate Leaflet grey tile bugs
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
+
 function ChangeView({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
     if (center && center[0] && center[1]) {
       map.setView(center, zoom || 14);
+      map.invalidateSize();
     }
   }, [center, zoom, map]);
   return null;
@@ -85,6 +128,7 @@ export default function MapComponent({
   onToggleRoad,
   onSetStartPoint
 }) {
+  const [activeBasemapKey, setActiveBasemapKey] = useState('carto_dark');
   const [layers, setLayers] = useState({
     wildfire: true,
     flood: true,
@@ -105,8 +149,10 @@ export default function MapComponent({
     setLayers(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const currentBasemap = BASEMAP_PRESETS[activeBasemapKey] || BASEMAP_PRESETS.osm_standard;
+
   return (
-    <div className="relative w-full h-full min-h-[500px] rounded-lg overflow-hidden border border-ops-border bg-[#090d14]">
+    <div className="relative w-full h-full min-h-[500px] rounded-lg overflow-hidden border border-ops-border bg-[#080c14]">
       {/* Top Left: Operational Mode Badge */}
       <div className="absolute top-3 left-3 z-[1000] flex flex-col gap-2 pointer-events-none">
         <div className="bg-ops-surface/95 backdrop-blur-md border border-ops-border text-ops-text px-3 py-1.5 rounded shadow-lg text-[11px] font-mono flex items-center gap-2 pointer-events-auto">
@@ -121,16 +167,60 @@ export default function MapComponent({
         </div>
       </div>
 
-      {/* Top Right: Layer Visibility Control */}
+      {/* Top Right: Layer Visibility & Basemap Switcher (Zero API Key) */}
       <div className="absolute top-3 right-3 z-[1000] bg-ops-surface/95 backdrop-blur-md border border-ops-border rounded p-3 shadow-xl max-w-xs text-xs font-mono">
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-ops-border">
           <div className="flex items-center gap-1.5 font-bold text-white text-[11px]">
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            <span>GIS OVERLAYS</span>
+            <span>GIS MAP SETTINGS</span>
           </div>
-          <span className="text-[10px] text-ops-faint">CARTO DARK</span>
+          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/60 px-1 rounded">
+            NO API KEY REQUIRED
+          </span>
         </div>
-        <div className="space-y-1.5 text-ops-muted text-[11px]">
+
+        {/* Basemap Switcher */}
+        <div className="mb-3 space-y-1">
+          <span className="text-[10px] text-ops-faint uppercase block font-semibold">Basemap Provider:</span>
+          <div className="grid grid-cols-3 gap-1 text-[10px]">
+            <button
+              type="button"
+              onClick={() => setActiveBasemapKey('carto_dark')}
+              className={`px-1.5 py-1 rounded text-center transition cursor-pointer ${
+                activeBasemapKey === 'carto_dark' 
+                  ? 'bg-cyan-700 text-white font-bold' 
+                  : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
+              }`}
+            >
+              Dark
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveBasemapKey('osm_standard')}
+              className={`px-1.5 py-1 rounded text-center transition cursor-pointer ${
+                activeBasemapKey === 'osm_standard' 
+                  ? 'bg-cyan-700 text-white font-bold' 
+                  : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
+              }`}
+            >
+              OSM
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveBasemapKey('satellite_esri')}
+              className={`px-1.5 py-1 rounded text-center transition cursor-pointer ${
+                activeBasemapKey === 'satellite_esri' 
+                  ? 'bg-cyan-700 text-white font-bold' 
+                  : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
+              }`}
+            >
+              Satellite
+            </button>
+          </div>
+        </div>
+
+        {/* Layer Checkboxes */}
+        <div className="space-y-1.5 text-ops-muted text-[11px] border-t border-ops-border/70 pt-2">
           <label className="flex items-center justify-between cursor-pointer hover:text-white">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
@@ -196,7 +286,7 @@ export default function MapComponent({
 
       {/* Bottom Bar: Operational Legend */}
       <div className="absolute bottom-3 left-3 z-[1000] bg-ops-surface/90 backdrop-blur-md border border-ops-border rounded px-3 py-1.5 text-[11px] font-mono text-ops-muted shadow-lg flex items-center gap-4 flex-wrap">
-        <span className="text-ops-text font-bold">ROUTE CORRIDORS:</span>
+        <span className="text-ops-text font-bold">CORRIDORS:</span>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-1 bg-emerald-500 rounded-sm"></span>
           <span className="text-emerald-400 font-semibold">Recommended Safe</span>
@@ -218,14 +308,16 @@ export default function MapComponent({
         zoomControl={true}
       >
         <ChangeView center={center} zoom={14} />
+        <MapResizer />
         <MapClickHandler mapMode={mapMode} onMapClick={onMapClick} />
 
-        {/* Real Enterprise Dark Matter Tile Layer from CartoDB */}
+        {/* Dynamic Free Open Tile Layer (Zero API Key Needed) */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxZoom={19}
+          key={currentBasemap.id}
+          attribution={currentBasemap.attribution}
+          url={currentBasemap.url}
+          subdomains={currentBasemap.subdomains}
+          maxZoom={currentBasemap.maxZoom}
         />
 
         {/* Hazard Incident Danger Zones */}
