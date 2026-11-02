@@ -11,7 +11,17 @@ import {
   TrendingUp,
   Activity,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Zap,
+  Cpu,
+  Layers,
+  FileText,
+  Volume2,
+  Compass,
+  Flame,
+  Droplets,
+  ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
 
 export default function OverviewView({ 
@@ -38,42 +48,262 @@ export default function OverviewView({
   const notices = overviewData?.active_notices || [];
 
   return (
-    <div className="space-y-5">
-      {/* Incident Command Status Banner */}
-      <div className="bg-ops-surface border border-ops-border rounded-lg p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emg-critical animate-pulse"></span>
-            <span className="text-[11px] font-mono font-bold tracking-wider text-red-400 uppercase">
-              ACTIVE SITUATION ENVELOPE: LEVEL 1 EVACUATION
-            </span>
+    <div className="space-y-6">
+      {/* ======================================================== */}
+      {/* 1. FRONT PAGE EXECUTIVE MISSION HERO BANNER */}
+      {/* ======================================================== */}
+      <section className="relative overflow-hidden rounded-xl border border-cyan-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-[#0b1329] p-6 sm:p-8 shadow-2xl">
+        {/* Subtle background radar grid accent */}
+        <div className="absolute -right-20 -top-20 w-96 h-96 rounded-full bg-cyan-500/5 blur-3xl pointer-events-none"></div>
+        <div className="absolute right-1/4 -bottom-24 w-80 h-80 rounded-full bg-red-500/5 blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 space-y-6">
+          {/* Top Classification & Status Ribbon */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+              <span className="font-mono text-xs font-bold tracking-wider text-red-400 uppercase">
+                CRITICAL EVACUATION OPERATIONS ACTIVE (LEVEL 1)
+              </span>
+              <span className="hidden sm:inline-block text-slate-600">•</span>
+              <span className="hidden sm:inline-block font-mono text-xs text-slate-400">
+                JURISDICTION: PINE VALLEY METROPOLITAN BASIN
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded bg-slate-900/90 border border-slate-700/60 font-mono text-[11px] text-cyan-300">
+                SYSTEM STATUS: 100% OPERATIONAL
+              </span>
+              <span className="px-2.5 py-1 rounded bg-red-950/70 border border-red-800/80 font-mono text-[11px] text-red-300 font-semibold">
+                THREAT: HIGH
+              </span>
+            </div>
           </div>
-          <h2 className="text-xl font-bold text-white tracking-tight font-sans">
-            Pine Valley Metropolitan Evacuation Operations Dashboard
-          </h2>
-          <p className="text-xs text-ops-muted max-w-3xl leading-relaxed">
-            Multi-incident coordination system active. Dynamic risk surfaces model wildfire progression, flash flood inundation boundaries, and road network interdictions in real time.
-          </p>
+
+          {/* Hero Tagline & Description */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <div className="lg:col-span-8 space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/50 text-cyan-400 text-xs font-mono">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>INTELLIGENT CIVIL DEFENSE & SAFE ROUTE DISPATCH</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-sans leading-tight">
+                "Don't just alert people. <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
+                  Help them get to safety."
+                </span>
+              </h1>
+              <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+                EvacAI is an intelligent emergency evacuation coordination platform. When wildfires, flash floods, or hazardous chemicals compromise road infrastructure, EvacAI dynamically calculates <strong className="text-emerald-400">hazard-avoiding safe corridors</strong>, balances shelter intake capacity, and extracts field dispatches in real time.
+              </p>
+            </div>
+
+            {/* Quick Action Buttons (Direct Deep-Links) */}
+            <div className="lg:col-span-4 flex flex-col gap-2.5 w-full">
+              <button
+                type="button"
+                onClick={() => onNavigateTab('planner')}
+                className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-mono text-xs font-bold tracking-wider flex items-center justify-between shadow-lg shadow-emerald-950/40 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Navigation className="w-4 h-4 text-emerald-100" />
+                  <span>LAUNCH ROUTE ENGINE</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-emerald-200" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab('map')}
+                className="w-full py-2.5 px-4 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:border-cyan-500/50 font-mono text-xs font-medium flex items-center justify-between transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MapPin className="w-4 h-4 text-cyan-400" />
+                  <span>TACTICAL GIS LIVE MAP</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab('hazards')}
+                className="w-full py-2.5 px-4 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:border-amber-500/50 font-mono text-xs font-medium flex items-center justify-between transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Cpu className="w-4 h-4 text-amber-400" />
+                  <span>AI FIELD DISPATCH (NLP)</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab('notices')}
+                className="w-full py-2.5 px-4 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:border-purple-500/50 font-mono text-xs font-medium flex items-center justify-between transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Radio className="w-4 h-4 text-purple-400" />
+                  <span>PUBLIC SAFETY BULLETINS</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Engine Telemetry Bottom Ribbon */}
+          <div className="pt-3 border-t border-slate-800/70 grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px] font-mono text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Routing: <strong className="text-slate-200">Dijkstra / A* Risk Graph</strong></span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>GIS: <strong className="text-slate-200">Zero-Key Dark Basemaps</strong></span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>Shelters: <strong className="text-slate-200">Dynamic Load Balancer</strong></span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span>NLP: <strong className="text-slate-200">Autonomous Report Parser</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 2. CORE 4 MASTER FEATURES BANNER */}
+      {/* ======================================================== */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyan-400" />
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+              CORE 4 MASTER SYSTEM CAPABILITIES (CLICK TO LAUNCH)
+            </h2>
+          </div>
+          <span className="text-[10px] font-mono text-ops-faint">OPERATIONS ENGINE v2.0</span>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Feature 1: Safe Route Planner */}
+          <div 
             onClick={() => onNavigateTab('planner')}
-            className="px-3.5 py-2 rounded bg-cyan-700 hover:bg-cyan-600 text-white font-mono text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            className="group p-4 rounded-lg bg-ops-surface border border-ops-border hover:border-emerald-500/60 transition cursor-pointer flex flex-col justify-between space-y-3 hover:bg-slate-900/60"
           >
-            <Navigation className="w-3.5 h-3.5" />
-            <span>ROUTE PLANNER</span>
-          </button>
-          <button
-            onClick={() => onNavigateTab('map')}
-            className="px-3.5 py-2 rounded bg-ops-card hover:bg-ops-elevated text-ops-text border border-ops-border font-mono text-xs font-medium transition cursor-pointer"
-          >
-            <span>LIVE GIS MAP</span>
-          </button>
-        </div>
-      </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded bg-emerald-950/70 border border-emerald-800/80 flex items-center justify-center text-emerald-400">
+                  <Navigation className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+                  FLAGSHIP
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-white group-hover:text-emerald-300 transition">
+                1. Safe Evacuation Routing
+              </h3>
+              <p className="text-xs text-ops-muted leading-relaxed">
+                Custom topological road network engine calculating safe detour corridors vs. dangerous naive GPS paths, scoring 0-100 hazard risk independently.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-mono text-emerald-400 group-hover:translate-x-1 transition">
+              <span>Test Flood/Wildfire Detour</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </div>
 
-      {/* KPI Cards: High-Density Enterprise Metrics */}
+          {/* Feature 2: Tactical GIS Map */}
+          <div 
+            onClick={() => onNavigateTab('map')}
+            className="group p-4 rounded-lg bg-ops-surface border border-ops-border hover:border-cyan-500/60 transition cursor-pointer flex flex-col justify-between space-y-3 hover:bg-slate-900/60"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded bg-cyan-950/70 border border-cyan-800/80 flex items-center justify-center text-cyan-400">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-800/50">
+                  ZERO-API-KEY
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-white group-hover:text-cyan-300 transition">
+                2. Tactical GIS Mapping
+              </h3>
+              <p className="text-xs text-ops-muted leading-relaxed">
+                Watermark-free military-grade tactical basemaps with real-time hazard radius circles, clickable roadblocks, and live route overlays.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-mono text-cyan-400 group-hover:translate-x-1 transition">
+              <span>Open Tactical GIS</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </div>
+
+          {/* Feature 3: Dynamic Shelter Balancer */}
+          <div 
+            onClick={() => onNavigateTab('shelters')}
+            className="group p-4 rounded-lg bg-ops-surface border border-ops-border hover:border-amber-500/60 transition cursor-pointer flex flex-col justify-between space-y-3 hover:bg-slate-900/60"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded bg-amber-950/70 border border-amber-800/80 flex items-center justify-center text-amber-400">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/50">
+                  LIVE INTAKE
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-white group-hover:text-amber-300 transition">
+                3. Shelter Load Balancer
+              </h3>
+              <p className="text-xs text-ops-muted leading-relaxed">
+                Real-time bed utilization matrix with live intake increment steppers (+10, +25, -10), autonomous capacity routing, and triage alerts.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-mono text-amber-400 group-hover:translate-x-1 transition">
+              <span>Manage Shelter Beds</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </div>
+
+          {/* Feature 4: AI NLP Dispatch Parser */}
+          <div 
+            onClick={() => onNavigateTab('hazards')}
+            className="group p-4 rounded-lg bg-ops-surface border border-ops-border hover:border-purple-500/60 transition cursor-pointer flex flex-col justify-between space-y-3 hover:bg-slate-900/60"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded bg-purple-950/70 border border-purple-800/80 flex items-center justify-center text-purple-400">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/60 text-purple-400 border border-purple-800/50">
+                  AI DISPATCH
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-white group-hover:text-purple-300 transition">
+                4. Field Dispatch NLP
+              </h3>
+              <p className="text-xs text-ops-muted leading-relaxed">
+                Ingests unstructured 911 dispatch radio transcripts, extracts category, severity, radius, and coordinates, and spawns verified map hazards.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-mono text-purple-400 group-hover:translate-x-1 transition">
+              <span>Ingest Live Report</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 3. HIGH-DENSITY ENTERPRISE TELEMETRY KPI CARDS */}
+      {/* ======================================================== */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-ops-surface border border-ops-border p-3.5 rounded-lg space-y-1">
           <div className="text-[10px] font-mono text-ops-muted uppercase tracking-wider">
@@ -148,9 +378,11 @@ export default function OverviewView({
         </div>
       </div>
 
-      {/* Main Two-Column Operations Layout */}
+      {/* ======================================================== */}
+      {/* 4. MAIN TWO-COLUMN LOGISTICS & OPERATIONAL OVERVIEW */}
+      {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column (8 cols): Shelter Logistics & Routing Methodology */}
+        {/* Left Column (8 cols): Facility Matrix & Algorithmic Methodology */}
         <div className="lg:col-span-8 space-y-5">
           {/* Facility Logistics Matrix */}
           <div className="bg-ops-surface border border-ops-border rounded-lg p-4 space-y-3">
