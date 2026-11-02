@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EvacAI</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,sans-serif;color:#14181f;display:grid;grid-template-columns:1fr 360px;height:100vh}
+#map{height:100vh}aside{overflow:auto;padding:12px;background:#f6f7f9;border-left:1px solid #dde1e8}
+h1{font-size:20px;margin:0}h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5b6575;margin:14px 0 6px}
+.warn{background:#fef3c7;border:1px solid #d97706;border-radius:8px;padding:6px 8px;font-size:12px;margin:8px 0}
+button{font:inherit;border:1px solid #cfd5de;background:#fff;border-radius:8px;padding:5px 9px;cursor:pointer}button.on{background:#2563eb;color:#fff;border-color:#2563eb}
+.card{background:#fff;border:1px solid #dde1e8;border-radius:10px;padding:8px;margin-bottom:6px}.card.sel{border-color:#2563eb}
+textarea{width:100%;min-height:54px;font:inherit}.stale{color:#dc2626}small{color:#5b6575}.modes{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:800px){body{grid-template-columns:1fr;grid-template-rows:55vh auto;height:auto}#map{height:55vh}}
+</style></head><body>
+<div id="map"></div>
+<aside>
+<h1>🧭 EvacAI</h1><small id="src"></small>
+<div class="warn"><b>Simulated demo.</b> Not guaranteed safe. No live closure data. Confirm all guidance with authorities.</div>
+<h2>Map mode</h2>
+<div class="modes"><button data-m="start" class="on">Set start</button><button data-m="hazard">Add hazard</button><button data-m="road">Block / unblock road</button></div>
+<small id="hint"></small>
+<h2>Route</h2><div id="route" class="card">Click the map to set a start point.</div>
+<h2>Shelters</h2><div id="shelters"></div>
+<h2>Hazards</h2><div id="hazards"></div>
+<h2>Report text → hazard (NLP)</h2>
+<textarea id="rep" placeholder="e.g. Flooding reported near river road"></textarea>
+<button id="parse">Extract</button><div id="parsed"></div>
+<h2>Evacuation notices</h2>
+<textarea id="nt" placeholder="Draft notice…"></textarea><button id="pub">Publish</button><div id="notices"></div>
+</aside>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const $=id=>document.getElementById(id),api=(u,b,m)=>fetch("/api"+u,{method:m||(b?"POST":"GET"),headers:{"Content-Type":"application/json"},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+const map=L.map("map"),layer=L.layerGroup().addTo(map),rl=L.layerGroup().addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
+let S,mode="start",start=null,sel=null,fitted=false;
+const hints={start:"Click map to choose where people are.",hazard:"Click map to place a flood hazard (250 m).",road:"Click near a road to toggle it blocked."};
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll("[data-m]").forEach(x=>x.classList.toggle("on",x==b));$("hint").textContent=hints[mode]});
+$("hint").textContent=hints.start;
+const ago=t=>{const m=Math.round((S.now-t)/60);return m<1?"just now":m+" min ago"+(m>60?" (stale)":"")};
+async function load(){S=await api("/state");if(!fitted){map.setView(S.center,15);fitted=true}
+ $("src").textContent="Road data: "+S.graph;if(sel==null)sel=S.shelters[0].id;draw();
+ $("shelters").innerHTML=S.shelters.map(s=>{const p=Math.round(s.occupancy/s.capacity*100);return`<div class="card ${s.id==sel?"sel":""}"><b>${s.name}</b> <small>${!s.available?"UNAVAILABLE":p>85?"near capacity":"open"}</small><br><small>${s.occupancy}/${s.capacity} (${p}%)</small><br><button onclick="sel=${s.id};load()">Route here</button> <button onclick="api('/shelters/${s.id}',{available:${!s.available}}).then(load)">${s.available?"Mark unavailable":"Mark available"}</button></div>`}).join("");
+ $("hazards").innerHTML=S.hazards.map(h=>`<div class="card">${h.type} · sev ${h.severity} · ${h.radius} m<br><small class="${S.now-h.ts>3600?"stale":""}">${h.source} · updated ${ago(h.ts)}</small> <button onclick="api('/hazards/${h.id}',null,'DELETE').then(load)">Remove</button></div>`).join("")||"<small>None</small>";
+ $("notices").innerHTML=S.notices.map(n=>`<div class="card">${n.text.replace(/</g,"&lt;")}<br><small>${new Date(n.ts*1e3).toLocaleString()} · ${n.label}</small></div>`).join("");
+ if(start)findRoute()}
+function draw(){layer.clearLayers();
+ S.hazards.forEach(h=>L.circle([h.lat,h.lng],{radius:h.radius,color:h.type=="fire"?"#ea580c":"#2563eb",fillOpacity:.2}).bindTooltip(h.type).addTo(layer));
+ S.blocked.forEach(b=>L.polyline(b,{color:"#dc2626",weight:7,dashArray:"6 8"}).bindTooltip("Blocked").addTo(layer));
+ S.shelters.forEach(s=>L.marker([s.lat,s.lng],{opacity:s.available?1:.4}).bindTooltip(s.name).addTo(layer));
+ if(start)L.circleMarker(start,{radius:9,color:"#2563eb",fillOpacity:1}).bindTooltip("Start").addTo(layer)}
+async function findRoute(){rl.clearLayers();const r=await api("/route",{lat:start[0],lng:start[1],shelter_id:sel});
+ if(!r.found){$("route").innerHTML="<b>"+r.message+"</b>";if(r.shortest)L.polyline(r.shortest,{color:"#d97706",dashArray:"4 10"}).addTo(rl);return}
+ L.polyline(r.shortest,{color:"#d97706",weight:5,dashArray:"4 10"}).addTo(rl);L.polyline(r.safe,{color:"#15803d",weight:6}).addTo(rl);
+ $("route").innerHTML=`<b style="color:#d97706">Shortest:</b> risk ${r.shortest_stats.risk} · ${r.shortest_stats.length_m} m · ${r.shortest_stats.blocked} blocked<br><b style="color:#15803d">Risk-aware:</b> risk ${r.safe_stats.risk} · ${r.safe_stats.length_m} m<p>${r.explanation}</p><small>Depends on accuracy and freshness of hazard data.</small>`}
+map.on("click",async e=>{const p={lat:e.latlng.lat,lng:e.latlng.lng};
+ if(mode=="start"){start=[p.lat,p.lng];draw();findRoute()}
+ else if(mode=="hazard"){await api("/hazards",{...p,type:"flood"});load()}
+ else{await api("/roads/toggle",p);load()}});
+$("parse").onclick=async()=>{const r=await api("/reports/parse",{text:$("rep").value});
+ if(!r.type||!r.place){$("parsed").innerHTML="<small>Could not find both a hazard type and a known place. Add it manually.</small>";return}
+ $("parsed").innerHTML=`<div class="card">Detected <b>${r.type}</b> near <b>${r.place.name}</b><br><button id="ok">Confirm &amp; add</button><br><small>${r.note}</small></div>`;
+ $("ok").onclick=async()=>{await api("/hazards",{type:r.type,lat:r.place.lat,lng:r.place.lng,source:"Parsed report (confirmed)"});$("parsed").innerHTML="";$("rep").value="";load()}};
+$("pub").onclick=async()=>{if(!$("nt").value.trim())return;await api("/notices",{text:$("nt").value});$("nt").value="";load()};
+load();
+</script></body></html>
