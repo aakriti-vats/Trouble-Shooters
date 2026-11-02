@@ -9,27 +9,27 @@ export default {
     extend: {
       colors: {
         ops: {
-          bg: '#0a0e17',
-          surface: '#111827',
-          card: '#1a2234',
-          border: '#243049',
-          borderHover: '#374768',
-          text: '#f3f4f6',
-          muted: '#9ca3af',
+          bg: '#080c14',
+          surface: '#0f1623',
+          card: '#151f30',
+          elevated: '#1c283f',
+          border: '#233047',
+          borderLight: '#324463',
+          text: '#f1f5f9',
+          muted: '#94a3b8',
+          faint: '#64748b',
         },
-        emergency: {
-          red: '#ef4444',
-          orange: '#f97316',
-          yellow: '#eab308',
-          green: '#10b981',
-          blue: '#3b82f6',
+        emg: {
+          critical: '#ef4444',
+          warning: '#f59e0b',
+          safe: '#10b981',
+          info: '#3b82f6',
           cyan: '#06b6d4',
-          purple: '#8b5cf6',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Inter', 'sans-serif'],
+        mono: ['SF Mono', 'Menlo', 'Monaco', 'JetBrains Mono', 'monospace'],
       }
     },
   },

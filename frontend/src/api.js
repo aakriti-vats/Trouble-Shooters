@@ -136,3 +136,4 @@ export async function resetDemoScenario() {
   if (!res.ok) throw new Error('Failed to reset demo');
   return res.json();
 }
+

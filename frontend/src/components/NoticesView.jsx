@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { 
   Radio, 
-  AlertTriangle, 
   Send, 
   Trash2, 
   Volume2, 
-  VolumeX, 
   ShieldAlert, 
   Clock, 
   CheckCircle2,
-  Users
+  AlertTriangle
 } from 'lucide-react';
 import { createNotice, deleteNotice } from '../api';
 
@@ -42,12 +40,12 @@ export default function NoticesView({ stateData, onRefresh }) {
       });
       await onRefresh();
     } catch (err) {
-      alert('Failed to broadcast notice: ' + err.message);
+      alert('Failed to transmit bulletin: ' + err.message);
     }
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Rescind and archive this emergency notice?')) {
+    if (confirm('Rescind and archive this public emergency bulletin?')) {
       try {
         await deleteNotice(id);
         await onRefresh();
@@ -57,7 +55,6 @@ export default function NoticesView({ stateData, onRefresh }) {
     }
   };
 
-  // Text to Speech playback for realistic civilian broadcast simulation
   const handlePlayVoiceAlert = (text) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -65,7 +62,7 @@ export default function NoticesView({ stateData, onRefresh }) {
         setIsPlayingAudio(false);
         return;
       }
-      const utter = new SpeechSynthesisUtterance("Emergency Alert: " + text);
+      const utter = new SpeechSynthesisUtterance("Civilian Emergency Directive: " + text);
       utter.rate = 0.95;
       utter.pitch = 1.0;
       utter.onend = () => setIsPlayingAudio(false);
@@ -73,63 +70,61 @@ export default function NoticesView({ stateData, onRefresh }) {
       setIsPlayingAudio(true);
       window.speechSynthesis.speak(utter);
     } else {
-      alert('Speech synthesis not supported on this browser.');
+      alert('Speech synthesis not available in this browser environment.');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-ops-card border border-ops-border rounded-xl p-5 shadow-lg">
+      <div className="bg-ops-surface border border-ops-border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-purple-400" />
-            <h2 className="text-xl font-bold text-white tracking-tight">Public Emergency Notices & Broadcasts</h2>
+            <Radio className="w-4 h-4 text-purple-400" />
+            <h2 className="text-lg font-bold text-white font-sans">Public Safety Bulletins & Emergency Broadcasts</h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Authoritative multi-channel civil protection alerts sent via WEA, EAS sirens, radio, and mobile carriers.
+          <p className="text-xs text-ops-muted mt-0.5">
+            Authoritative civil defense bulletins transmitted across Wireless Emergency Alerts (WEA), EAS sirens, radio, and mobile carriers.
           </p>
         </div>
 
         <button
           onClick={() => setShowBroadcastForm(!showBroadcastForm)}
-          className="px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-purple-950/50 cursor-pointer self-start sm:self-auto"
+          className="px-3.5 py-1.5 rounded bg-purple-700 hover:bg-purple-600 text-white font-mono text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer self-start sm:self-auto"
         >
-          <Send className="w-4 h-4" />
-          <span>{showBroadcastForm ? 'Cancel Notice' : 'Draft New Broadcast'}</span>
+          <Send className="w-3.5 h-3.5" />
+          <span>{showBroadcastForm ? 'CANCEL' : 'DRAFT NEW BULLETIN'}</span>
         </button>
       </div>
 
-      {/* Broadcast Composer Form */}
+      {/* Broadcast Form Drawer */}
       {showBroadcastForm && (
-        <div className="bg-ops-card border border-ops-border rounded-xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-ops-border">
-            <h3 className="font-bold text-sm text-white">Draft Emergency Alert Order</h3>
-            <span className="text-[10px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded uppercase">
-              HIGH PRIORITY CHANNELS
-            </span>
+        <div className="bg-ops-surface border border-ops-border rounded-lg p-4 space-y-3 font-sans">
+          <div className="flex items-center justify-between border-b border-ops-border pb-2">
+            <h3 className="font-bold text-xs font-mono text-white uppercase">Compose Public Safety Directive</h3>
+            <span className="text-[10px] font-mono text-ops-faint">HIGH PRIORITY CARRIER GATEWAY</span>
           </div>
 
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <form onSubmit={handleCreate} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-slate-300 mb-1">Notice Headline</label>
+                <label className="block text-[11px] font-mono text-ops-muted mb-1">BULLETIN TITLE</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. MANDATORY EVACUATION: East Ridge Wildfire Sector"
+                  placeholder="e.g. MANDATORY EVACUATION ORDER: East Ridge Wildfire Sector"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full bg-ops-surface border border-ops-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-ops-bg border border-ops-border rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Severity Classification</label>
+                <label className="block text-[11px] font-mono text-ops-muted mb-1">SEVERITY LEVEL</label>
                 <select
                   value={form.severity_level}
                   onChange={(e) => setForm({ ...form, severity_level: e.target.value })}
-                  className="w-full bg-ops-surface border border-ops-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-ops-bg border border-ops-border rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
                 >
                   <option value="CRITICAL_EVACUATION">CRITICAL EVACUATION (IMMEDIATE)</option>
                   <option value="WARNING">WARNING (HIGH ALERT)</option>
@@ -140,72 +135,50 @@ export default function NoticesView({ stateData, onRefresh }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Affected Sectors / Zones</label>
+              <label className="block text-[11px] font-mono text-ops-muted mb-1">TARGETED SECTORS / JURISDICTIONS</label>
               <input
                 type="text"
                 required
                 value={form.affected_zones}
                 onChange={(e) => setForm({ ...form, affected_zones: e.target.value })}
-                className="w-full bg-ops-surface border border-ops-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-ops-bg border border-ops-border rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Public Alert Text</label>
+              <label className="block text-[11px] font-mono text-ops-muted mb-1">PUBLIC BROADCAST TEXT</label>
               <textarea
                 required
                 rows={3}
-                placeholder="Clear instructions for civilians: routes to take, designated shelters, items to carry..."
+                placeholder="Specific guidance for civilians: routes to utilize, designated shelters, instructions..."
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="w-full bg-ops-surface border border-ops-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full bg-ops-bg border border-ops-border rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 leading-relaxed"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Dissemination Channels</label>
-                <input
-                  type="text"
-                  value={form.channels}
-                  onChange={(e) => setForm({ ...form, channels: e.target.value })}
-                  className="w-full bg-ops-surface border border-ops-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Issuing Authority</label>
-                <input
-                  type="text"
-                  value={form.issued_by}
-                  onChange={(e) => setForm({ ...form, issued_by: e.target.value })}
-                  className="w-full bg-ops-surface border border-ops-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1 font-mono">
               <button
                 type="button"
                 onClick={() => setShowBroadcastForm(false)}
-                className="px-4 py-2 rounded-lg bg-ops-surface hover:bg-slate-800 text-slate-300 text-xs font-medium border border-ops-border cursor-pointer"
+                className="px-3 py-1 rounded bg-ops-bg hover:bg-ops-elevated text-ops-muted text-xs border border-ops-border cursor-pointer"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg"
+                className="px-4 py-1 rounded bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Transmit Broadcast Notice</span>
+                <span>TRANSMIT PUBLIC DIRECTIVE</span>
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Notices Stream */}
-      <div className="space-y-4">
+      {/* Bulletins Stream */}
+      <div className="space-y-3">
         {notices.map((notice) => {
           const isCritical = notice.severity_level === 'CRITICAL_EVACUATION';
           const isWarning = notice.severity_level === 'WARNING';
@@ -213,61 +186,62 @@ export default function NoticesView({ stateData, onRefresh }) {
           return (
             <div
               key={notice.id}
-              className={`p-5 rounded-xl border transition shadow-lg space-y-3 ${
+              className={`p-4 rounded-lg border transition space-y-2.5 ${
                 isCritical 
-                  ? 'bg-red-950/20 border-red-500/40 hover:border-red-500' 
+                  ? 'bg-ops-surface border-red-500/50' 
                   : isWarning 
-                  ? 'bg-amber-950/20 border-amber-500/40 hover:border-amber-500' 
-                  : 'bg-ops-card border-ops-border hover:border-slate-600'
+                  ? 'bg-ops-surface border-amber-500/50' 
+                  : 'bg-ops-surface border-ops-border'
               }`}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${isCritical ? 'bg-red-500 animate-ping' : 'bg-amber-400'}`}></span>
-                  <span className={`text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                    isCritical ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                    isWarning ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                    'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ops-border pb-2">
+                <div className="flex items-center gap-2 font-mono text-xs">
+                  <span className={`w-2 h-2 rounded-full ${isCritical ? 'bg-red-500' : 'bg-amber-400'}`}></span>
+                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
+                    isCritical ? 'bg-red-950/60 text-red-400 border border-red-800/60' :
+                    isWarning ? 'bg-amber-950/60 text-amber-400 border border-amber-800/60' :
+                    'bg-cyan-950/60 text-cyan-400 border border-cyan-800/60'
                   }`}>
                     {notice.severity_level.replace('_', ' ')}
                   </span>
-                  <span className="text-xs font-mono text-slate-400">
-                    Sectors: <strong className="text-slate-200">{notice.affected_zones}</strong>
+                  <span className="text-ops-faint">|</span>
+                  <span className="text-ops-muted">
+                    SECTORS: <strong className="text-white">{notice.affected_zones}</strong>
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
-                  <span>{new Date(notice.created_at * 1000).toLocaleString()}</span>
+                <div className="text-[11px] font-mono text-ops-faint">
+                  {new Date(notice.created_at * 1000).toLocaleString()}
                 </div>
               </div>
 
               <div>
-                <h3 className="font-extrabold text-base text-white">{notice.title}</h3>
-                <p className="text-sm text-slate-200 mt-1 leading-relaxed bg-slate-900/60 p-3 rounded-lg border border-ops-border font-sans">
+                <h3 className="font-bold text-sm text-white">{notice.title}</h3>
+                <p className="text-xs text-ops-text mt-1 leading-relaxed bg-ops-bg p-3 rounded border border-ops-border font-mono">
                   {notice.message}
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-ops-border text-xs">
-                <div className="text-slate-400 font-mono">
-                  Channels: <span className="text-cyan-300">{notice.channels}</span> • Issued By: <span className="text-slate-300">{notice.issued_by}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] font-mono text-ops-faint pt-1">
+                <div>
+                  DISSEMINATION: <span className="text-cyan-300">{notice.channels}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handlePlayVoiceAlert(notice.message)}
-                    className="px-3 py-1.5 rounded-lg bg-ops-surface hover:bg-slate-800 text-slate-200 border border-ops-border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
+                    className="px-2.5 py-1 rounded bg-ops-bg hover:bg-ops-elevated text-ops-muted hover:text-white border border-ops-border text-xs flex items-center gap-1.5 transition cursor-pointer"
                   >
                     <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{isPlayingAudio ? 'Stop Voice Alert' : 'Civilian Voice TTS'}</span>
+                    <span>{isPlayingAudio ? 'STOP VOICE' : 'PLAY TTS DIRECTIVE'}</span>
                   </button>
 
                   <button
                     onClick={() => handleDelete(notice.id)}
-                    className="px-3 py-1.5 rounded-lg bg-ops-surface hover:bg-red-950 text-red-400 border border-ops-border text-xs font-medium flex items-center gap-1 transition cursor-pointer"
+                    className="px-2.5 py-1 rounded bg-ops-bg hover:bg-red-950 text-red-400 border border-ops-border text-xs flex items-center gap-1 transition cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Rescind</span>
+                    <Trash2 className="w-3 h-3" />
+                    <span>RESCIND</span>
                   </button>
                 </div>
               </div>

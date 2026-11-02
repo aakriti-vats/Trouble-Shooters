@@ -148,3 +148,4 @@ class PresetLocation(Base):
             "lng": self.lng,
             "description": self.description,
         }
+
