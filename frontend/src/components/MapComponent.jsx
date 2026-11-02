@@ -18,34 +18,44 @@ import {
   Globe,
   Satellite,
   Compass,
-  CheckCircle2
+  CheckCircle2,
+  Moon
 } from 'lucide-react';
 
-// Pre-configured public tile servers (All 100% free, zero API key required)
+// 100% Free, Public, Open Geospatial Basemaps (Completely Watermark-Free & Zero API Key Required)
 const BASEMAP_PRESETS = {
-  carto_dark: {
-    id: 'carto_dark',
-    label: 'Tactical Dark (CartoDB)',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    subdomains: 'abcd',
+  osm_dark: {
+    id: 'osm_dark',
+    label: 'Tactical Dark',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    attribution: '&copy; OpenStreetMap contributors',
+    className: 'osm-tactical-dark',
+  },
+  esri_dark: {
+    id: 'esri_dark',
+    label: 'ESRI Dark Canvas',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    referenceUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+    maxZoom: 16,
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+    className: '',
   },
   osm_standard: {
     id: 'osm_standard',
-    label: 'OpenStreetMap (Public)',
+    label: 'OSM Standard',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    subdomains: 'abc',
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors',
+    className: '',
   },
   satellite_esri: {
     id: 'satellite_esri',
-    label: 'Satellite Imagery (ESRI)',
+    label: 'Satellite Aerial',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    subdomains: '',
     maxZoom: 18,
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+    className: 'esri-satellite-tiles',
   }
 };
 
@@ -98,7 +108,7 @@ function MapResizer() {
   useEffect(() => {
     const timer = setTimeout(() => {
       map.invalidateSize();
-    }, 200);
+    }, 150);
     return () => clearTimeout(timer);
   }, [map]);
   return null;
@@ -128,7 +138,7 @@ export default function MapComponent({
   onToggleRoad,
   onSetStartPoint
 }) {
-  const [activeBasemapKey, setActiveBasemapKey] = useState('carto_dark');
+  const [activeBasemapKey, setActiveBasemapKey] = useState('osm_dark');
   const [layers, setLayers] = useState({
     wildfire: true,
     flood: true,
@@ -149,7 +159,7 @@ export default function MapComponent({
     setLayers(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const currentBasemap = BASEMAP_PRESETS[activeBasemapKey] || BASEMAP_PRESETS.osm_standard;
+  const currentBasemap = BASEMAP_PRESETS[activeBasemapKey] || BASEMAP_PRESETS.osm_dark;
 
   return (
     <div className="relative w-full h-full min-h-[500px] rounded-lg overflow-hidden border border-ops-border bg-[#080c14]">
@@ -167,7 +177,7 @@ export default function MapComponent({
         </div>
       </div>
 
-      {/* Top Right: Layer Visibility & Basemap Switcher (Zero API Key) */}
+      {/* Top Right: Layer Visibility & Basemap Switcher (100% Watermark Free) */}
       <div className="absolute top-3 right-3 z-[1000] bg-ops-surface/95 backdrop-blur-md border border-ops-border rounded p-3 shadow-xl max-w-xs text-xs font-mono">
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-ops-border">
           <div className="flex items-center gap-1.5 font-bold text-white text-[11px]">
@@ -175,40 +185,52 @@ export default function MapComponent({
             <span>GIS MAP SETTINGS</span>
           </div>
           <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/60 px-1 rounded">
-            NO API KEY REQUIRED
+            ZERO API KEY
           </span>
         </div>
 
-        {/* Basemap Switcher */}
+        {/* Basemap Switcher (Free, Watermark-Free Tiles) */}
         <div className="mb-3 space-y-1">
-          <span className="text-[10px] text-ops-faint uppercase block font-semibold">Basemap Provider:</span>
-          <div className="grid grid-cols-3 gap-1 text-[10px]">
+          <span className="text-[10px] text-ops-faint uppercase block font-semibold">Basemap Theme:</span>
+          <div className="grid grid-cols-2 gap-1 text-[10px]">
             <button
               type="button"
-              onClick={() => setActiveBasemapKey('carto_dark')}
-              className={`px-1.5 py-1 rounded text-center transition cursor-pointer ${
-                activeBasemapKey === 'carto_dark' 
+              onClick={() => setActiveBasemapKey('osm_dark')}
+              className={`px-2 py-1 rounded text-center transition cursor-pointer flex items-center justify-center gap-1 ${
+                activeBasemapKey === 'osm_dark' 
                   ? 'bg-cyan-700 text-white font-bold' 
                   : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
               }`}
             >
-              Dark
+              <Moon className="w-2.5 h-2.5" />
+              <span>Tactical Dark</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveBasemapKey('esri_dark')}
+              className={`px-2 py-1 rounded text-center transition cursor-pointer ${
+                activeBasemapKey === 'esri_dark' 
+                  ? 'bg-cyan-700 text-white font-bold' 
+                  : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
+              }`}
+            >
+              ESRI Dark
             </button>
             <button
               type="button"
               onClick={() => setActiveBasemapKey('osm_standard')}
-              className={`px-1.5 py-1 rounded text-center transition cursor-pointer ${
+              className={`px-2 py-1 rounded text-center transition cursor-pointer ${
                 activeBasemapKey === 'osm_standard' 
                   ? 'bg-cyan-700 text-white font-bold' 
                   : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
               }`}
             >
-              OSM
+              OSM Standard
             </button>
             <button
               type="button"
               onClick={() => setActiveBasemapKey('satellite_esri')}
-              className={`px-1.5 py-1 rounded text-center transition cursor-pointer ${
+              className={`px-2 py-1 rounded text-center transition cursor-pointer ${
                 activeBasemapKey === 'satellite_esri' 
                   ? 'bg-cyan-700 text-white font-bold' 
                   : 'bg-ops-bg text-ops-muted hover:text-white border border-ops-border'
@@ -311,14 +333,23 @@ export default function MapComponent({
         <MapResizer />
         <MapClickHandler mapMode={mapMode} onMapClick={onMapClick} />
 
-        {/* Dynamic Free Open Tile Layer (Zero API Key Needed) */}
+        {/* 100% Free Open Basemap (Zero Watermark, Zero API Key) */}
         <TileLayer
           key={currentBasemap.id}
           attribution={currentBasemap.attribution}
           url={currentBasemap.url}
-          subdomains={currentBasemap.subdomains}
           maxZoom={currentBasemap.maxZoom}
+          className={currentBasemap.className}
         />
+
+        {/* Optional Reference Label Layer for ESRI Dark Canvas */}
+        {currentBasemap.referenceUrl && (
+          <TileLayer
+            key={`${currentBasemap.id}-ref`}
+            url={currentBasemap.referenceUrl}
+            maxZoom={currentBasemap.maxZoom}
+          />
+        )}
 
         {/* Hazard Incident Danger Zones */}
         {incidents.map((hazard) => {

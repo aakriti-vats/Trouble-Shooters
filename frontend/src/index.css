@@ -34,7 +34,7 @@ body {
   background: #233047;
 }
 
-/* Professional Dark Map Container */
+/* Base Leaflet Container */
 .leaflet-container {
   background: #080c14 !important;
   font-family: inherit;
@@ -46,6 +46,16 @@ body {
 .leaflet-div-icon {
   background: transparent !important;
   border: none !important;
+}
+
+/* High-Contrast Tactical Dark Mode on 100% Free OpenStreetMap Tiles (NO API KEY, NO WATERMARK) */
+.osm-tactical-dark .leaflet-tile {
+  filter: brightness(0.6) invert(1) contrast(2.8) hue-rotate(200deg) saturate(0.25) brightness(0.75) !important;
+}
+
+/* Subtle satellite brightness tuning */
+.esri-satellite-tiles .leaflet-tile {
+  filter: brightness(0.85) contrast(1.1);
 }
 
 /* Leaflet Popups */
