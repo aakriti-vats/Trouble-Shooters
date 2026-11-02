@@ -10,12 +10,13 @@ import {
   CheckCircle2, 
   Printer, 
   Download, 
-  RotateCw,
-  Compass,
-  AlertOctagon,
-  ChevronDown,
-  ChevronUp,
-  FileText
+  RotateCw, 
+  Compass, 
+  AlertOctagon, 
+  ChevronDown, 
+  ChevronUp, 
+  Zap,
+  Activity
 } from 'lucide-react';
 import { planRoute } from '../api';
 
@@ -28,9 +29,9 @@ export default function RoutePlannerView({
   routesData,
   setRoutesData 
 }) {
-  const [autoSelectShelter, setAutoSelectShelter] = useState(true);
-  const [selectedShelterId, setSelectedShelterId] = useState(selectedShelter?.id || '');
-  const [selectedPreset, setSelectedPreset] = useState('');
+  const [autoSelectShelter, setAutoSelectShelter] = useState(false);
+  const [selectedShelterId, setSelectedShelterId] = useState('2'); // Default to Civic Center (shows flood contrast)
+  const [selectedPreset, setSelectedPreset] = useState('Westside Valley Community');
   const [activeRouteType, setActiveRouteType] = useState('safe');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -39,12 +40,19 @@ export default function RoutePlannerView({
   const presets = stateData?.presets || [];
   const shelters = stateData?.shelters || [];
 
+  // Default to Westside Valley -> Civic Center so the flood bypass is dramatically visible on load
   useEffect(() => {
-    if (!startPoint && presets.length > 0) {
-      setStartPoint([presets[0].lat, presets[0].lng]);
-      setSelectedPreset(presets[0].name);
+    const westside = presets.find(p => p.name.includes('Westside Valley'));
+    if (westside) {
+      setStartPoint([westside.lat, westside.lng]);
+      setSelectedPreset(westside.name);
     }
-  }, [presets, startPoint, setStartPoint]);
+    const civic = shelters.find(s => s.name.includes('Civic Center'));
+    if (civic) {
+      setSelectedShelterId(civic.id.toString());
+      setSelectedShelter(civic);
+    }
+  }, [presets, shelters]);
 
   const handlePresetSelect = (e) => {
     const val = e.target.value;
@@ -55,8 +63,12 @@ export default function RoutePlannerView({
     }
   };
 
-  const handleCalculateRoutes = async () => {
-    if (!startPoint) {
+  const handleCalculateRoutes = async (customStart, customShelterId, customAuto) => {
+    const sPt = customStart || startPoint;
+    const sId = customShelterId !== undefined ? customShelterId : selectedShelterId;
+    const isAuto = customAuto !== undefined ? customAuto : autoSelectShelter;
+
+    if (!sPt) {
       setErrorMsg('Please select an origin coordinate.');
       return;
     }
@@ -65,10 +77,10 @@ export default function RoutePlannerView({
     setErrorMsg('');
     try {
       const payload = {
-        start_lat: startPoint[0],
-        start_lng: startPoint[1],
-        auto_select_shelter: autoSelectShelter,
-        shelter_id: !autoSelectShelter && selectedShelterId ? parseInt(selectedShelterId) : null,
+        start_lat: sPt[0],
+        start_lng: sPt[1],
+        auto_select_shelter: isAuto,
+        shelter_id: !isAuto && sId ? parseInt(sId) : null,
       };
 
       const result = await planRoute(payload);
@@ -84,11 +96,49 @@ export default function RoutePlannerView({
     }
   };
 
+  // Run on initial load
   useEffect(() => {
-    if (!routesData && startPoint) {
-      handleCalculateRoutes();
+    const westside = presets.find(p => p.name.includes('Westside Valley'));
+    const civic = shelters.find(s => s.name.includes('Civic Center'));
+    if (westside && civic && !routesData) {
+      handleCalculateRoutes([westside.lat, westside.lng], civic.id.toString(), false);
     }
-  }, []);
+  }, [presets, shelters]);
+
+  // Demo Scenarios Quick Pickers
+  const loadScenario = (type) => {
+    if (type === 'flood_detour') {
+      const westside = presets.find(p => p.name.includes('Westside Valley')) || presets[3];
+      const civic = shelters.find(s => s.name.includes('Civic Center')) || shelters[1];
+      if (westside && civic) {
+        setStartPoint([westside.lat, westside.lng]);
+        setSelectedPreset(westside.name);
+        setAutoSelectShelter(false);
+        setSelectedShelterId(civic.id.toString());
+        setSelectedShelter(civic);
+        handleCalculateRoutes([westside.lat, westside.lng], civic.id.toString(), false);
+      }
+    } else if (type === 'wildfire_evac') {
+      const pine = presets.find(p => p.name.includes('Pine Ridge')) || presets[4];
+      const stadium = shelters.find(s => s.name.includes('Stadium')) || shelters[0];
+      if (pine && stadium) {
+        setStartPoint([pine.lat, pine.lng]);
+        setSelectedPreset(pine.name);
+        setAutoSelectShelter(false);
+        setSelectedShelterId(stadium.id.toString());
+        setSelectedShelter(stadium);
+        handleCalculateRoutes([pine.lat, pine.lng], stadium.id.toString(), false);
+      }
+    } else if (type === 'auto_safe') {
+      const plaza = presets.find(p => p.name.includes('Sector 17')) || presets[0];
+      if (plaza) {
+        setStartPoint([plaza.lat, plaza.lng]);
+        setSelectedPreset(plaza.name);
+        setAutoSelectShelter(true);
+        handleCalculateRoutes([plaza.lat, plaza.lng], null, true);
+      }
+    }
+  };
 
   const handlePrintManifest = () => {
     window.print();
@@ -107,14 +157,51 @@ export default function RoutePlannerView({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-      {/* Left Column (5 cols): Parameter Controls & Comparative Analysis */}
+      {/* Left Column: Parameters & Comparative Analysis (5 cols) */}
       <div className="lg:col-span-5 space-y-4">
+        {/* Quick Demo Scenario Switcher Banner */}
+        <div className="bg-ops-surface border border-cyan-500/30 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-bold text-cyan-400 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>TEST DEMO SCENARIOS (CLICK TO SIMULATE):</span>
+            </span>
+            <span className="text-[10px] font-mono text-ops-faint">ONE-CLICK</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
+            <button
+              type="button"
+              onClick={() => loadScenario('flood_detour')}
+              className="p-1.5 rounded bg-ops-bg hover:bg-ops-elevated text-cyan-300 border border-ops-border hover:border-cyan-500/50 text-left transition cursor-pointer"
+            >
+              <span className="font-bold block text-white">⚡ Flood Detour</span>
+              <span className="text-[9px] text-ops-faint">Direct hits flood (89)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => loadScenario('wildfire_evac')}
+              className="p-1.5 rounded bg-ops-bg hover:bg-ops-elevated text-amber-300 border border-ops-border hover:border-amber-500/50 text-left transition cursor-pointer"
+            >
+              <span className="font-bold block text-white">⚡ Wildfire Evac</span>
+              <span className="text-[9px] text-ops-faint">Direct breaches fire</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => loadScenario('auto_safe')}
+              className="p-1.5 rounded bg-ops-bg hover:bg-ops-elevated text-emerald-300 border border-ops-border hover:border-emerald-500/50 text-left transition cursor-pointer"
+            >
+              <span className="font-bold block text-white">⚡ Auto Safe</span>
+              <span className="text-[9px] text-ops-faint">AI picks safest shelter</span>
+            </button>
+          </div>
+        </div>
+
         {/* Route Planning Parameters Card */}
         <div className="bg-ops-surface border border-ops-border rounded-lg p-4 space-y-3.5">
           <div className="flex items-center justify-between border-b border-ops-border pb-2.5">
             <div className="flex items-center gap-2">
               <Navigation className="w-4 h-4 text-cyan-400" />
-              <h3 className="font-bold text-sm text-white font-sans">Evacuation Route Parameters</h3>
+              <h3 className="font-bold text-sm text-white font-sans">Evacuation Corridor Parameters</h3>
             </div>
             <span className="text-[10px] font-mono text-ops-faint">GRAPH ENGINE v2.0</span>
           </div>
@@ -191,13 +278,13 @@ export default function RoutePlannerView({
           </div>
 
           {errorMsg && (
-            <div className="p-2 rounded bg-red-950/40 border border-red-800 text-red-300 text-xs">
+            <div className="p-2 rounded bg-red-950/40 border border-red-800 text-red-300 text-xs font-mono">
               {errorMsg}
             </div>
           )}
 
           <button
-            onClick={handleCalculateRoutes}
+            onClick={() => handleCalculateRoutes()}
             disabled={loading}
             className="w-full py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-mono text-xs font-bold tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer"
           >
@@ -209,8 +296,9 @@ export default function RoutePlannerView({
         {/* Route Comparative Cards */}
         {routesData && routesData.routes && (
           <div className="space-y-2.5">
-            <div className="text-[10px] font-mono uppercase text-ops-muted tracking-wider">
-              Corridor Comparison Analysis:
+            <div className="text-[10px] font-mono uppercase text-ops-muted tracking-wider flex items-center justify-between">
+              <span>Corridor Risk Comparison:</span>
+              <span className="text-cyan-400">CLICK CARD TO HIGHLIGHT</span>
             </div>
 
             {/* Recommended Safe Route */}
@@ -248,7 +336,7 @@ export default function RoutePlannerView({
                   </div>
                 </div>
 
-                <p className="text-[11px] text-ops-muted leading-relaxed font-sans">
+                <p className="text-[11px] text-emerald-300/90 leading-relaxed font-sans">
                   {routesData.routes.safe.clearance_text}
                 </p>
               </div>
@@ -269,7 +357,11 @@ export default function RoutePlannerView({
                     <span className="w-2 h-2 rounded-full bg-amber-400"></span>
                     <span className="font-bold text-xs text-amber-300">Direct Route (Standard GPS)</span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 font-bold border border-amber-800/60">
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${
+                    routesData.routes.direct.risk_score > 60
+                      ? 'bg-red-950/80 text-red-400 border-red-800'
+                      : 'bg-amber-950/60 text-amber-400 border-amber-800/60'
+                  }`}>
                     RISK SCORE: {routesData.routes.direct.risk_score} / 100 ({routesData.routes.direct.risk_level})
                   </span>
                 </div>
@@ -284,14 +376,16 @@ export default function RoutePlannerView({
                     <strong className="text-white">{routesData.routes.direct.eta_minutes} min</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] text-ops-faint uppercase block">Closures</span>
-                    <strong className={routesData.routes.direct.blocked_points > 0 ? 'text-red-400' : 'text-ops-muted'}>
-                      {routesData.routes.direct.blocked_points} Blocked
+                    <span className="text-[10px] text-ops-faint uppercase block">Danger Zones</span>
+                    <strong className={routesData.routes.direct.hazard_breaches?.length > 0 ? 'text-red-400' : 'text-ops-muted'}>
+                      {routesData.routes.direct.hazard_breaches?.length || 0} Breached
                     </strong>
                   </div>
                 </div>
 
-                <p className="text-[11px] text-ops-muted leading-relaxed font-sans">
+                <p className={`text-[11px] leading-relaxed font-sans ${
+                  routesData.routes.direct.risk_score > 60 ? 'text-red-300' : 'text-ops-muted'
+                }`}>
                   {routesData.routes.direct.clearance_text}
                 </p>
               </div>
@@ -328,7 +422,7 @@ export default function RoutePlannerView({
                   </div>
                   <div>
                     <span className="text-[10px] text-ops-faint uppercase block">Corridor</span>
-                    <strong className="text-blue-400">Arterial</strong>
+                    <strong className="text-blue-400">Outer Ring</strong>
                   </div>
                 </div>
 
@@ -353,7 +447,7 @@ export default function RoutePlannerView({
         )}
       </div>
 
-      {/* Right Column (7 cols): Tactical Map & Navigation Waypoint Flight Log */}
+      {/* Right Column: Tactical Map & Waypoint Navigation (7 cols) */}
       <div className="lg:col-span-7 space-y-4">
         {/* Map Header with Export Tools */}
         <div className="bg-ops-surface border border-ops-border rounded-lg p-3 flex items-center justify-between gap-3">
@@ -403,7 +497,8 @@ export default function RoutePlannerView({
             onSelectShelter={(sh) => {
               setSelectedShelter(sh);
               setAutoSelectShelter(false);
-              setSelectedShelterId(sh.id);
+              setSelectedShelterId(sh.id.toString());
+              handleCalculateRoutes(startPoint, sh.id.toString(), false);
             }}
           />
         </div>
