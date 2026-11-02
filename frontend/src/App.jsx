@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
+import LandingView from './components/LandingView';
 import OverviewView from './components/OverviewView';
 import LiveMapView from './components/LiveMapView';
 import RoutePlannerView from './components/RoutePlannerView';
@@ -10,7 +11,7 @@ import { fetchOverview, fetchState, planRoute } from './api';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('landing');
   const [overviewData, setOverviewData] = useState(null);
   const [stateData, setStateData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +94,10 @@ export default function App() {
           </div>
         ) : (
           <>
+            {activeTab === 'landing' && (
+              <LandingView onNavigateTab={setActiveTab} />
+            )}
+
             {activeTab === 'overview' && (
               <OverviewView
                 overviewData={overviewData}

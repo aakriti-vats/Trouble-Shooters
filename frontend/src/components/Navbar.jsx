@@ -92,6 +92,7 @@ export default function Navbar({ activeTab, setActiveTab, overviewData, onRefres
   };
 
   const navItems = [
+    { id: 'landing', label: 'Home / Mission' },
     { id: 'overview', label: 'Dashboard Overview' },
     { id: 'map', label: 'Tactical GIS Map' },
     { id: 'planner', label: 'Evacuation Route Engine' },
@@ -133,7 +134,10 @@ export default function Navbar({ activeTab, setActiveTab, overviewData, onRefres
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo & Platform Name */}
-          <div className="flex items-center gap-3">
+          <div 
+            onClick={() => setActiveTab('landing')}
+            className="flex items-center gap-3 cursor-pointer"
+          >
             <div className="w-8 h-8 rounded bg-gradient-to-b from-slate-800 to-slate-900 border border-ops-borderLight flex items-center justify-center text-cyan-400 shadow-sm">
               <ShieldAlert className="w-4 h-4 text-cyan-400" />
             </div>
